@@ -1,5 +1,4 @@
 import authorize as au
-import pandas as pd
 import datetime
 import json
 
@@ -33,12 +32,21 @@ def get_messages(service):
     return messages
 
 
+def trash_messages(service):
+    messages = get_messages(service)
+    msg_ids = []
+
+    for message in messages:
+        msg_id = message['id']
+        msg_ids.append(msg_id)
+
+    body = {"ids": msg_ids, "removeLabelIds": ["INBOX", "UNREAD"], "addLabelIds": ["TRASH"]}
+    service.users().messages().batchModify(userId=user_id, body=body).execute()
+
+
 def main():
     service = au.Authorization().authorize()
-    messages = get_messages(service)
-
-    df = pd.DataFrame(messages)
-    df.to_csv('Message_List.csv')
+    trash_messages(service)
 
 
 if __name__ == '__main__':
