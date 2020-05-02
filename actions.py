@@ -48,11 +48,28 @@ def trash_messages(service):
         print('No messages returned with this search')
 
 
+def archive_messages(service):
+    messages = get_messages(service)
+    msg_ids = []
+
+    for message in messages:
+        msg_id = message['id']
+        msg_ids.append(msg_id)
+
+    body = {"ids": msg_ids, "removeLabelIds": ["INBOX", "UNREAD"]}
+    try:
+        service.users().messages().batchModify(userId=user_id, body=body).execute()
+    except:
+        print('No messages returned with this search')
+
+
 def main():
     service = au.Authorization().authorize()
 
     if action == 'trash':
         trash_messages(service)
+    elif action == 'archive':
+        archive_messages(service)
 
 
 if __name__ == '__main__':
