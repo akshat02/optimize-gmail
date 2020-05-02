@@ -1,10 +1,14 @@
 import authorize as au
 import pandas as pd
 import datetime
+import json
 
-from_id = 'order@zomato.com'
+with open("params.json", "r") as params:
+    data = json.load(params)
+
+from_id = data["from"]
 # Before date format should be in 'YYYY/MM/DD'
-before_date = '2019/01/01'
+before_date = data["before-date"]
 user_id = 'me'
 
 
