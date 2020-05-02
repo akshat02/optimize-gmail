@@ -9,6 +9,7 @@ from_id = data["from"]
 # Before date format should be in 'YYYY/MM/DD'
 before_date = data["before-date"]
 user_id = 'me'
+action = data["action"]
 
 
 def get_messages(service):
@@ -41,12 +42,17 @@ def trash_messages(service):
         msg_ids.append(msg_id)
 
     body = {"ids": msg_ids, "removeLabelIds": ["INBOX", "UNREAD"], "addLabelIds": ["TRASH"]}
-    service.users().messages().batchModify(userId=user_id, body=body).execute()
+    try:
+        service.users().messages().batchModify(userId=user_id, body=body).execute()
+    except:
+        print('No messages returned with this search')
 
 
 def main():
     service = au.Authorization().authorize()
-    trash_messages(service)
+
+    if action == 'trash':
+        trash_messages(service)
 
 
 if __name__ == '__main__':
