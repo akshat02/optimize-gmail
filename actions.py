@@ -2,75 +2,92 @@ import authorize as au
 import datetime
 import json
 
-with open("params.json", "r") as params:
-    data = json.load(params)
 
-from_id = data["from"]
-# Before date format should be in 'YYYY/MM/DD'
-before_date = data["before-date"]
-user_id = 'me'
-action = data["action"]
+class Actions:
 
+    USER = 'me'
 
-def get_messages(service):
-    try:
-        datetime.datetime.strptime(before_date, '%Y/%m/%d')
-    except:
-        raise ValueError("Incorrect date format, should be YYYY/MM/DD")
+    def __init__(self):
+        pass
 
-    search_query = 'from:' + from_id + ' before:' + before_date
+    def get_params(self):
+        with open("params.json", "r") as params:
+            data = json.load(params)
 
-    response = service.users().messages().list(userId=user_id, q=search_query).execute()
-    messages = []
+        from_id = data["from"]
+        # Before date format should be in 'YYYY/MM/DD'
+        before_date = data["before-date"]
+        action = data["action"]
 
-    if 'messages' in response:
-        messages.extend(response['messages'])
-    while 'nextPageToken' in response:
-        page_token = response['nextPageToken']
-        response = service.users().messages().list(userId=user_id, q=search_query, pageToken=page_token).execute()
-        messages.extend(response['messages'])
+        return [from_id, before_date, action]
 
-    return messages
+    def get_messages(self, service):
+        params = self.get_params()
+        from_id = params[0]
+        before_date = params[1]
+        USER = self.USER
 
+        try:
+            datetime.datetime.strptime(before_date, '%Y/%m/%d')
+        except:
+            raise ValueError("Incorrect date format, should be YYYY/MM/DD")
 
-def trash_messages(service):
-    messages = get_messages(service)
-    msg_ids = []
+        search_query = 'from:' + from_id + ' before:' + before_date
 
-    for message in messages:
-        msg_id = message['id']
-        msg_ids.append(msg_id)
+        response = service.users().messages().list(
+            userId=USER, q=search_query).execute()
+        messages = []
 
-    body = {"ids": msg_ids, "removeLabelIds": ["INBOX", "UNREAD"], "addLabelIds": ["TRASH"]}
-    try:
-        service.users().messages().batchModify(userId=user_id, body=body).execute()
-    except:
-        print('No messages returned with this search')
+        if 'messages' in response:
+            messages.extend(response['messages'])
+        while 'nextPageToken' in response:
+            page_token = response['nextPageToken']
+            response = service.users().messages().list(
+                userId=USER, q=search_query, pageToken=page_token).execute()
+            messages.extend(response['messages'])
 
+        return messages
 
-def archive_messages(service):
-    messages = get_messages(service)
-    msg_ids = []
+    def trash_messages(self, service):
+        messages = self.get_messages(service)
+        msg_ids = []
+        USER = self.USER
 
-    for message in messages:
-        msg_id = message['id']
-        msg_ids.append(msg_id)
+        for message in messages:
+            msg_id = message['id']
+            msg_ids.append(msg_id)
 
-    body = {"ids": msg_ids, "removeLabelIds": ["INBOX", "UNREAD"]}
-    try:
-        service.users().messages().batchModify(userId=user_id, body=body).execute()
-    except:
-        print('No messages returned with this search')
+        body = {"ids": msg_ids, "removeLabelIds": [
+            "INBOX", "UNREAD"], "addLabelIds": ["TRASH"]}
+        try:
+            service.users().messages().batchModify(userId=USER, body=body).execute()
+        except:
+            print('No messages returned with this search')
 
+    def archive_messages(self, service):
+        messages = self.get_messages(service)
+        msg_ids = []
+        USER = self.USER
 
-def main():
-    service = au.Authorization().authorize()
+        for message in messages:
+            msg_id = message['id']
+            msg_ids.append(msg_id)
 
-    if action == 'trash':
-        trash_messages(service)
-    elif action == 'archive':
-        archive_messages(service)
+        body = {"ids": msg_ids, "removeLabelIds": ["INBOX", "UNREAD"]}
+        try:
+            service.users().messages().batchModify(userId=USER, body=body).execute()
+        except:
+            print('No messages returned with this search')
+
+    def main(self):
+        service = au.Authorization().authorize()
+        params = self.get_params()
+
+        if params[2] == 'trash':
+            self.trash_messages(service)
+        elif params[2] == 'archive':
+            self.archive_messages(service)
 
 
 if __name__ == '__main__':
-    main()
+    Actions().main()
