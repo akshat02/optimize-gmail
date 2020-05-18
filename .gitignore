@@ -8,3 +8,5 @@ __pycache__/
 *.pickle
 *.csv
 *.bat
+*.ipynb
+Dockerfile
